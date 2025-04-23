@@ -1,7 +1,7 @@
 Summary:        Edge Microvisor Toolkit repo files, gpg keys
 Name:           edge-repos
 Version:        3.0
-Release:        4%{?dist}
+Release:        5%{?dist}
 License:        MIT
 Vendor:         Intel Corporation
 Distribution:   Edge Microvisor Toolkit
@@ -54,6 +54,9 @@ gpg --batch --yes --delete-keys 84910237BDFAAD16C4F9D44411FF864ABDCE8692
 %{_sysconfdir}/pki/rpm-gpg/INTEL-RPM-GPG-KEY
 
 %changelog
+* Wed Apr 23 2025 Anuj Mittal <anuj.mittal@intel.com> - 3.0-5
+- Remove trailing slash from URL.
+
 * Mon Apr 21 2025 Mun Chun Yep <mun.chun.yep@intel.com> - 3.0-4
 - Update Intel rpm gpg key and repo URL.
 - License verified
