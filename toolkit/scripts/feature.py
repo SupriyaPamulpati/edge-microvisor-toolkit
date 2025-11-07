@@ -50,7 +50,12 @@ class IntelFeatureChecker:
         return cpu_info
 
     def run_command(self, cmd: str) -> str:
-        """Execute shell command and return output"""
+        """Execute shell command and return output
+        
+        Note: Uses shell=True for convenience with shell features like pipes and redirection.
+        All commands are hardcoded in this script, so there's no risk of command injection
+        from external input. This is safe as long as no user input is passed to run_command.
+        """
         try:
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
             return result.stdout.strip()
@@ -140,7 +145,8 @@ class IntelFeatureChecker:
         
         # Check MSR 0x48B (IA32_VMX_PROCBASED_CTLS2) for MBEC support
         # This MSR contains the secondary processor-based VM-execution controls
-        # Bit 54 specifically indicates MBEC (Mode-Based Execution Control) support
+        # Bit 54 (counting from bit 0) indicates MBEC (Mode-Based Execution Control) support
+        # 0x40000000000000 = bit 54 set (1 << 54)
         msr_result = self.run_command("sudo rdmsr 0x48B 2>/dev/null")
         
         if msr_result:
@@ -408,7 +414,9 @@ class IntelFeatureChecker:
                 for feature_name, available, enabled in platform_features:
                     all_features.append((category_name, feature_name, available, enabled))
             except Exception as e:
-                all_features.append((category_name, "Error", False, False))
+                # Log the error for debugging but continue with other checks
+                error_msg = f"Error ({str(e)[:30]})"
+                all_features.append((category_name, error_msg, False, False))
 
         return all_features
 
