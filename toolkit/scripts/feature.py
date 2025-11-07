@@ -188,12 +188,9 @@ class IntelFeatureChecker:
 
                     vtx_enabled = (not vtx_locked) or kvm_check
 
-            except (ValueError, TypeError) as e:
-                print(f"DEBUG: Exception: {e}")  # Debug line
+            except (ValueError, TypeError):
                 vtx_available = False
                 vtx_enabled = False
-        else:
-            print("DEBUG: No MSR result")  # Debug line
 
         features.append(("VT-x", vtx_available, vtx_enabled))
 
@@ -469,15 +466,9 @@ class IntelFeatureChecker:
             ("Intel SGX", sgx_ok)
         ]
 
-        for component, status in tse_components:
-            status_str = "✓ ENABLED" if status else "✗ DISABLED"
-            status_color = "\033[92m" if status else "\033[91m"
-            #print(f"{'TSE Components':<30} {f'\t{component}':<25} {'✓ YES':<15} {status_color}{status_str}{reset}")
-
         # Overall TSE status
         tse_status_str = "✓ ENABLED" if tse_enabled else "✗ DISABLED"
         tse_status_color = "\033[92m" if tse_enabled else "\033[91m"
-        #print(f"{'TSE Overall Status':<30} {'\tTrusted Secure Execution':<25} {'✓ YES':<15} {tse_status_color}{tse_status_str}{reset}")
 
         print("-" * 100)
 
