@@ -138,15 +138,17 @@ class IntelFeatureChecker:
         mbec_available = False
         mbec_enabled = False
         
-        # Check MSR 0x48B (IA32_VMX_PROCBASED_CTLS2) bit 54 for MBEC support
+        # Check MSR 0x48B (IA32_VMX_PROCBASED_CTLS2) for MBEC support
+        # This MSR contains the secondary processor-based VM-execution controls
+        # Bit 54 specifically indicates MBEC (Mode-Based Execution Control) support
         msr_result = self.run_command("sudo rdmsr 0x48B 2>/dev/null")
         
         if msr_result:
             try:
                 msr_value = int(msr_result.strip(), 16)
-                # Check bit 54 for MBEC support
-                # Bit 54 indicates native hardware MBEC support
-                mbec_available = (msr_value & (1 << 54)) != 0
+                # Check bit 54 for MBEC support using hex notation to avoid overflow
+                # Bit 54 = 0x40000000000000 indicates native hardware MBEC support
+                mbec_available = (msr_value & 0x40000000000000) != 0
                 
                 # If MBEC is available, check if it's enabled
                 # MBEC is considered enabled if the hardware supports it and VT-x is enabled
@@ -175,8 +177,7 @@ class IntelFeatureChecker:
             try:
                 msr_value = int(msr_result.strip(), 16)
 
-                # Check if VT-x is supported
-                # Value 5 (0x5) indicates VT-x is supported
+                # Check if VT-x is supported by examining bit 0 of MSR 0x3A
                 # Bit 0 = 1 means VT-x feature is available
                 vtx_available = (msr_value & 0x1) == 1
 
@@ -313,7 +314,11 @@ class IntelFeatureChecker:
 
         # SMX
         smx_available = 'smx' in cpu_flags
-        smx_enabled = smx_available  # If present, assume enabled
+        # Check if SMX is actually enabled via dmesg or TXT-related messages
+        smx_enabled = False
+        if smx_available:
+            smx_dmesg = self.run_command("dmesg | grep -i 'smx\\|txt'")
+            smx_enabled = bool(smx_dmesg and 'enabled' in smx_dmesg.lower())
         features.append(("SMX", smx_available, smx_enabled))
 
         # TXT Capability
@@ -472,8 +477,8 @@ class IntelFeatureChecker:
 
         print("-" * 100)
 
-        # Summary - count TSE features normally (no double counting)
-        total_features = len(results)  # Count all features including TSE features
+        # Summary
+        total_features = len(results)
         available_features = sum(1 for _, _, available, _ in results if available)
         enabled_features = sum(1 for _, _, available, enabled in results if available and enabled)
 
